@@ -1,0 +1,110 @@
+# .htaccess pour CréaMod3D
+
+# --- Activation du moteur de réécriture d'URL ---
+RewriteEngine On
+
+# --- Forcer HTTPS (recommandé en production) ---
+# Décommentez les lignes suivantes si votre certificat SSL est actif
+# RewriteCond %{HTTPS} off
+# RewriteCond %{HTTP_HOST} ^(www\.)?creamod3d\.fr [NC] # Adapté avec votre domaine
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# --- Redirection de www vers non-www (ou l'inverse) ---
+# Exemple : Forcer non-www (si vous préférez que l'URL soit sans www)
+# Décommentez si besoin
+# RewriteCond %{HTTP_HOST} ^www\.creamod3d\.fr [NC] # Adapté avec votre domaine
+# RewriteRule ^(.*)$ https://creamod3d.fr/$1 [L,R=301]
+
+# --- URL Propres (Exemple : supprimer l'extension .php) ---
+# Si vous avez des fichiers comme produits.php, contact.php, etc.
+# et que vous voulez y accéder via /produits, /contact
+
+# D'abord, s'assurer que la requête n'est pas pour un fichier ou dossier existant physiquement
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# Ensuite, si la requête + .php existe, la servir
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# --- Cacher index.php de l'URL si c'est votre fichier principal ---
+# Si vous voulez que creamod3d.fr/index.php soit accessible via creamod3d.fr/
+# La plupart des serveurs le font par défaut via DirectoryIndex, mais cela peut aider.
+# RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
+# RewriteRule ^index\.php$ / [L,R=301]
+
+# --- Protection des fichiers et dossiers sensibles ---
+# Interdire l'accès direct au fichier .htaccess lui-même
+<Files .htaccess>
+    Require all denied
+</Files>
+
+# Interdire l'accès direct au fichier de configuration de la base de données
+# Assurez-vous que le nom du fichier correspond exactement (db_config.php)
+<Files db_config.php>
+    Require all denied
+</Files>
+
+# Interdire le listage des répertoires (si pas déjà configuré au niveau serveur)
+Options -Indexes
+
+# Protéger le dossier 'includes' (si vous ne voulez pas d'accès direct aux fichiers inclus)
+<IfModule mod_rewrite.c>
+    RewriteRule ^includes/ - [F,L]
+</IfModule>
+
+# Protéger le dossier 'uploads' contre l'exécution de scripts PHP (mesure de sécurité)
+# Si vous stockez des fichiers uploadés par les utilisateurs
+# Le chemin est relatif à la racine du site où se trouve le .htaccess
+<DirectoryMatch "^./uploads/.*"> # Chemin relatif depuis la racine du site
+    <FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|cgi|pl|asp|aspx|sh|exe)$">
+        Require all denied
+    </FilesMatch>
+    # Optionnel : Empêcher le listage du contenu du dossier uploads
+    Options -Indexes
+</DirectoryMatch>
+
+
+# --- Pages d'erreur personnalisées (facultatif mais recommandé) ---
+# Créez des fichiers HTML/PHP pour ces erreurs (par exemple, erreur404.html ou erreur404.php)
+# ErrorDocument 400 /erreur400.html
+# ErrorDocument 401 /erreur401.html
+# ErrorDocument 403 /erreur403.html
+# ErrorDocument 404 /erreur404.php
+# ErrorDocument 500 /erreur500.html
+
+# --- Optimisation du cache (Exemple de base) ---
+# <IfModule mod_expires.c>
+#     ExpiresActive On
+#     ExpiresByType image/jpg "access plus 1 year"
+#     ExpiresByType image/jpeg "access plus 1 year"
+#     ExpiresByType image/gif "access plus 1 year"
+#     ExpiresByType image/png "access plus 1 year"
+#     ExpiresByType image/svg+xml "access plus 1 month"
+#     ExpiresByType text/css "access plus 1 month"
+#     ExpiresByType application/javascript "access plus 1 month"
+#     ExpiresByType application/x-javascript "access plus 1 month"
+#     ExpiresByType application/pdf "access plus 1 month"
+#     ExpiresByType image/x-icon "access plus 1 year"
+# </IfModule>
+
+# --- Compression (si mod_deflate est disponible) ---
+# <IfModule mod_deflate.c>
+#     AddOutputFilterByType DEFLATE text/plain
+#     AddOutputFilterByType DEFLATE text/html
+#     AddOutputFilterByType DEFLATE text/xml
+#     AddOutputFilterByType DEFLATE text/css
+#     AddOutputFilterByType DEFLATE application/xml
+#     AddOutputFilterByType DEFLATE application/xhtml+xml
+#     AddOutputFilterByType DEFLATE application/rss+xml
+#     AddOutputFilterByType DEFLATE application/javascript
+#     AddOutputFilterByType DEFLATE application/x-javascript
+# </IfModule>
+
+# --- Paramètres PHP (si votre hébergeur le permet via .htaccess) ---
+# Exemple : Augmenter la taille maximale des fichiers uploadés
+# php_value upload_max_filesize 64M
+# php_value post_max_size 64M
+# php_value max_execution_time 300
+# php_value max_input_time 300
+
+# --- Fin du fichier .htaccess ---
